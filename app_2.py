@@ -22,7 +22,7 @@ def get_pdf_text(pdf_docs):
 def get_text_chunks(text):
     text_splitter = CharacterTextSplitter(
         separator="\n",
-        chunk_size=1000,
+        chunk_size=1002,
         chunk_overlap=200,
         length_function=len
     )
@@ -34,13 +34,25 @@ def get_text_chunks(text):
 #     vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
 #     return vectorstore
 
-def get_conversation_chain(vectorstore):
+def get_conversation_chain(text_chunks):
     # Initialize the GPT-2 model
     gpt2_model = gpt2.start_tf_sess()
     gpt2.load_gpt2(gpt2_model)
-    
+
+    llm = {
+        "model": gpt2,  # Use GPT-2 as the language model
+        "tokenizer": None,  # Adjust if a tokenizer is required
+        # Add other parameters based on the requirements of ConversationalRetrievalChain.from_llm
+    }
+
+    # Get embeddings using GPT-2
+    embeddings = gpt2.encode(text_chunks)  # Adjust based on the actual method to get embeddings
+
+    # Assuming FAISS is used as a vector retriever
+    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+
     conversation_chain = ConversationalRetrievalChain.from_llm(
-        llm=gpt2,  # Use GPT-2 as the language model
+        llm=llm,
         retriever=vectorstore  # Provide the vector retriever here
     )
     return conversation_chain
